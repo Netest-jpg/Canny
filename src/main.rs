@@ -147,11 +147,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     let max_mag = magnitude.iter().cloned().fold(0.0f32, f32::max);
     let t_high = 0.20 * max_mag;
     let t_low = 0.40 * t_high;
-    let mut n_strong: usize = 0;
-    for magnitude in &mut magnitude {
+    let mut strong_edges: VecDeque<usize> = VecDeque::new();
+    for (i, magnitude) in magnitude.iter_mut().enumerate() {
         if *magnitude >= t_high {
             *magnitude = 255.0;
-            n_strong += 1;
+            strong_edges.push_back(i);
         } else if *magnitude < t_low {
             *magnitude = 0.0;
         } else {
@@ -159,15 +159,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    let mut strong_edges: VecDeque<usize> = VecDeque::with_capacity(n_strong);
-    for y in 0..height {
-        for x in 0..width {
-            let i = (y + 1) * padded_width + (x + 1);
-            if magnitude[i] == 255.0 {
-                strong_edges.push_back(i);
-            }
-        }
-    }
     while let Some(i) = strong_edges.pop_front() {
         for dy in [-1isize, 0, 1] {
             for dx in [-1isize, 0, 1] {

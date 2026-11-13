@@ -145,6 +145,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut magnitude = suppressed;
 
     let max_mag = magnitude.iter().cloned().fold(0.0f32, f32::max);
+    if max_mag == 0.0 {
+        let magnitude = remove_pad(&magnitude, width, height);
+        let image = to_image(&magnitude, width as u32, height as u32);
+        image.save("out.png")?;
+        return Ok(());
+    }
     let t_high = 0.20 * max_mag;
     let t_low = 0.40 * t_high;
     let mut strong_edges: VecDeque<usize> = VecDeque::new();
@@ -178,6 +184,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let magnitude = remove_pad(&magnitude, width, height);
     let image = to_image(&magnitude, width as u32, height as u32);
-    image.save("out.png").unwrap();
+    image.save("out.png")?;
     Ok(())
 }

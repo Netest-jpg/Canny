@@ -101,7 +101,7 @@ fn edge_padding(src: &[u8], width: usize, height: usize) -> Vec<u8> {
 fn main() -> Result<(), Box<dyn Error>> {
     let image = ImageReader::open("Mona_Lisa.jpg")?.decode()?;
     #[rustfmt::skip]
-    let gx_kernel : [i8; 9]= [
+    let gx_kernel: [i8; 9] = [
         -1, 0, 1,
         -2, 0, 2,
         -1, 0, 1
@@ -138,7 +138,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             _ => (j - pw + 1, j + pw - 1),
         };
         let m = magnitude[j];
-        if m >= magnitude[a] && m >= magnitude[b] {
+        // >= on one side and > on the other, so a tie keeps exactly one pixel
+        if m >= magnitude[a] && m > magnitude[b] {
             *out = m;
         }
     }

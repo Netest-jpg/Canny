@@ -14,42 +14,43 @@ fn calculate_gradients(
     let mut magnitude = Vec::with_capacity(width * height);
     let mut direction = Vec::with_capacity(width * height);
 
-    for y in 0..height {
-        for x in 0..width {
-            let mut gx = 0i16;
-            let mut gy = 0i16;
+    for i in 0..(width * height) {
+        let x = i % width; // column
+        let y = i / width; // row
 
-            for ky in 0..3 {
-                for kx in 0..3 {
-                    let pixel = src[(y + ky) * pw + (x + kx)] as i16;
-                    let k = ky * 3 + kx;
+        let mut gx = 0i16;
+        let mut gy = 0i16;
 
-                    gx += gx_kernel[k] as i16 * pixel;
-                    gy += gy_kernel[k] as i16 * pixel;
-                }
+        for ky in 0..3 {
+            for kx in 0..3 {
+                let pixel = src[(y + ky) * pw + (x + kx)] as i16;
+                let k = ky * 3 + kx;
+
+                gx += gx_kernel[k] as i16 * pixel;
+                gy += gy_kernel[k] as i16 * pixel;
             }
-
-            let gx = gx as i32;
-            let gy = gy as i32;
-
-            let g = (gx * gx + gy * gy) as u32;
-            let mut theta = (gy as f32).atan2(gx as f32).to_degrees();
-            if theta < 0.0 {
-                theta += 180.0;
-            }
-            let theta = if theta < 22.5 || theta >= 157.5 {
-                0
-            } else if theta < 67.5 {
-                45
-            } else if theta < 112.5 {
-                90
-            } else {
-                135
-            };
-
-            magnitude.push(g);
-            direction.push(theta);
         }
+
+        let gx = gx as i32;
+        let gy = gy as i32;
+
+        let g = (gx * gx + gy * gy) as u32;
+        let mut theta = (gy as f32).atan2(gx as f32).to_degrees();
+        if theta < 0.0 {
+            theta += 180.0;
+        }
+        let theta = if theta < 22.5 || theta >= 157.5 {
+            0
+        } else if theta < 67.5 {
+            45
+        } else if theta < 112.5 {
+            90
+        } else {
+            135
+        };
+
+        magnitude.push(g);
+        direction.push(theta);
     }
 
     (magnitude, direction)

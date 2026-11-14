@@ -103,17 +103,6 @@ fn edge_padding(src: &[u8], width: usize, height: usize) -> Vec<u8> {
     slate
 }
 
-#[inline]
-fn remove_pad(src: &[u8], width: usize, height: usize) -> Vec<u8> {
-    let pw = width + 2;
-    let mut slate = Vec::with_capacity(width * height);
-    for i in 0..height {
-        let start = (i + 1) * pw + 1;
-        slate.extend_from_slice(&src[start..start + width]);
-    }
-    slate
-}
-
 fn main() -> Result<(), Box<dyn Error>> {
     let image = ImageReader::open("Mona_Lisa.jpg")?.decode()?;
     #[rustfmt::skip]
@@ -140,20 +129,22 @@ fn main() -> Result<(), Box<dyn Error>> {
     let pw = width + 2;
     let magnitude = zero_padding_u32(&raw_magnitude, width, height);
     let direction = zero_padding_u8(&raw_direction, width, height);
-    let mut suppressed = vec![0u32; magnitude.len()];
-    for y in 0..height {
-        for x in 0..width {
-            let i = (y + 1) * pw + (x + 1);
-            let (a, b) = match direction[i] {
-                0 => (i - 1, i + 1),
-                45 => (i - pw - 1, i + pw + 1),
-                90 => (i - pw, i + pw),
-                _ => (i - pw + 1, i + pw - 1),
-            };
-            let m = magnitude[i];
-            if m >= magnitude[a] && m >= magnitude[b] {
-                suppressed[i] = m;
-            }
+
+    let mut suppressed = vec![0u32; width * height];
+    for (i, out) in suppressed.iter_mut().enumerate() {
+        let x = i % width;
+        let y = i / width;
+
+        let j = (y + 1) * pw + (x + 1);
+        let (a, b) = match direction[j] {
+            0 => (j - 1, j + 1),
+            45 => (j - pw - 1, j + pw + 1),
+            90 => (j - pw, j + pw),
+            _ => (j - pw + 1, j + pw - 1),
+        };
+        let m = magnitude[j];
+        if m >= magnitude[a] && m >= magnitude[b] {
+            *out = m;
         }
     }
 
@@ -185,12 +176,19 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     }
     while let Some(i) = queue.pop_front() {
+        let x = (i % width) as isize;
+        let y = (i / width) as isize;
         for dy in [-1isize, 0, 1] {
             for dx in [-1isize, 0, 1] {
                 if dx == 0 && dy == 0 {
                     continue;
                 }
-                let j = (i as isize + dy * pw as isize + dx) as usize;
+                let nx = x + dx;
+                let ny = y + dy;
+                if nx < 0 || ny < 0 || nx >= width as isize || ny >= height as isize {
+                    continue;
+                }
+                let j = ny as usize * width + nx as usize;
                 if edges[j] == 127 {
                     edges[j] = 255;
                     queue.push_back(j);
@@ -198,13 +196,13 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
         }
     }
+
     for pixel in &mut edges {
         if *pixel == 127 {
             *pixel = 0;
         }
     }
 
-    let edges = remove_pad(&edges, width, height);
     let image = to_image(edges, width as u32, height as u32);
     image.save("out.png")?;
     Ok(())

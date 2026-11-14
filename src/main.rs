@@ -153,19 +153,22 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     if max_mag == 0 {
         edges.resize(suppressed.len(), 0);
-    } else {
-        let t_high = max_mag as f64 * 0.04;
-        let t_low = t_high * 0.16;
+        let image = to_image(edges, width as u32, height as u32);
+        image.save("out.png")?;
+        return Ok(());
+    }
 
-        for &magnitude in &suppressed {
-            let value = magnitude as f64;
-            if value >= t_high {
-                edges.push(255);
-            } else if value < t_low {
-                edges.push(0);
-            } else {
-                edges.push(127);
-            }
+    let t_high = max_mag as f64 * 0.04;
+    let t_low = t_high * 0.16;
+
+    for &magnitude in &suppressed {
+        let value = magnitude as f64;
+        if value >= t_high {
+            edges.push(255);
+        } else if value < t_low {
+            edges.push(0);
+        } else {
+            edges.push(127);
         }
     }
 

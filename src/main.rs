@@ -57,11 +57,6 @@ fn calculate_gradients(
 }
 
 #[inline]
-fn to_image(src: Vec<u8>, width: u32, height: u32) -> GrayImage {
-    GrayImage::from_raw(width, height, src).unwrap()
-}
-
-#[inline]
 fn zero_padding_u32(src: &[u32], width: usize, height: usize) -> Vec<u32> {
     let pw = width + 2;
     let mut slate = Vec::with_capacity(pw * (height + 2));
@@ -153,7 +148,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     if max_mag == 0 {
         edges.resize(suppressed.len(), 0);
-        let image = to_image(edges, width as u32, height as u32);
+        let image = GrayImage::from_raw(width as u32, height as u32, edges).unwrap();
         image.save("out.png")?;
         return Ok(());
     }
@@ -206,7 +201,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    let image = to_image(edges, width as u32, height as u32);
+    let image = GrayImage::from_raw(width as u32, height as u32, edges).unwrap();
     image.save("out.png")?;
     Ok(())
 }
